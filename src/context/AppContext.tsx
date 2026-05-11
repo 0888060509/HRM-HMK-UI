@@ -148,16 +148,54 @@ const generateShifts = (): Shift[] => {
   addShiftsForWeek(1, "next");
   addShiftsForWeek(2, "future");
 
-  // Add some specific variants for the Current Week
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
 
-  shifts.push({
-    id: `special_buddy`,
+  const nextWeekDay = new Date(today);
+  nextWeekDay.setDate(today.getDate() + 7);
+
+  const finalShifts = shifts.filter(
+    (s) =>
+      s.date.getTime() !== today.getTime() &&
+      s.date.getTime() !== tomorrow.getTime() &&
+      s.date.getTime() !== nextWeekDay.getTime()
+  );
+
+  finalShifts.push({
+    id: `case_pending_today`,
     date: today,
     shiftName: "Ca Sáng",
     timeStr: "08:00 - 15:00",
     hours: 7,
+    currentStaff: 4,
+    maxStaff: 5,
+    status: "pending",
+    storeName: "HMK Nguyễn Trãi",
+    skillTag: "Tư vấn",
+  });
+
+  finalShifts.push({
+    id: `case_cancelled_today`,
+    date: today,
+    shiftName: "Ca Tối",
+    timeStr: "17:00 - 23:00",
+    hours: 6,
+    currentStaff: 3,
+    maxStaff: 5,
+    status: "cancelled",
+    storeName: "HMK Nguyễn Trãi",
+    skillTag: "Thu ngân",
+  });
+
+  finalShifts.push({
+    id: `case_handshake_today`,
+    date: today,
+    shiftName: "Ca Gãy",
+    timeStr: "10:00 - 14:00",
+    hours: 4,
     currentStaff: 5,
     maxStaff: 5,
     status: "approved",
@@ -167,7 +205,34 @@ const generateShifts = (): Shift[] => {
     requireHandshake: true,
   });
 
-  return shifts;
+  finalShifts.push({
+    id: `case_swap_tomorrow`,
+    date: tomorrow,
+    shiftName: "Ca Xuyên Đêm",
+    timeStr: "00:00 - 08:00",
+    hours: 8,
+    currentStaff: 2,
+    maxStaff: 2,
+    status: "approved",
+    storeName: "HMK Nguyễn Trãi",
+    skillTag: "Kho",
+    isPendingSwap: true,
+  });
+
+  finalShifts.push({
+    id: `case_approved_next_week`,
+    date: nextWeekDay,
+    shiftName: "Ca Sáng",
+    timeStr: "08:00 - 15:00",
+    hours: 7,
+    currentStaff: 5,
+    maxStaff: 5,
+    status: "approved",
+    storeName: "HMK Nguyễn Trãi",
+    skillTag: "Tư vấn",
+  });
+
+  return finalShifts;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);

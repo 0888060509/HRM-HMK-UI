@@ -221,10 +221,12 @@ export default function Schedule() {
   const [shiftDetailModal, setShiftDetailModal] = useState<Shift | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [calWeekOffset, setCalWeekOffset] = useState<number>(0);
 
   const startOfCurWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const viewCalWeekStart = addDays(startOfCurWeek, calWeekOffset * 7);
   const weekDays = Array.from({ length: 7 }).map((_, i) =>
-    addDays(startOfCurWeek, i),
+    addDays(viewCalWeekStart, i),
   );
 
   // --- GET DATA ---
@@ -340,13 +342,13 @@ export default function Schedule() {
               <div className="bg-white rounded-2xl p-5 shadow-card border border-slate-100">
                 <div className="flex justify-between items-center mb-5">
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-slate-400" /> Tháng {format(startOfCurWeek, "MM, yyyy")}
+                    <CalendarDays className="w-4 h-4 text-slate-400" /> Tháng {format(weekDays[0], "MM, yyyy")}
                   </h3>
                   <div className="flex gap-1.5">
-                    <button className="w-8 h-8 bg-white hover:bg-slate-50 flex items-center justify-center rounded-lg border border-slate-100 shadow-soft transition-all active:scale-95">
+                    <button onClick={() => setCalWeekOffset(prev => prev - 1)} className="w-8 h-8 bg-white hover:bg-slate-50 flex items-center justify-center rounded-lg border border-slate-100 shadow-soft transition-all active:scale-95">
                       <ChevronLeft className="w-4 h-4 text-slate-400" />
                     </button>
-                    <button className="w-8 h-8 bg-white hover:bg-slate-50 flex items-center justify-center rounded-lg border border-slate-100 shadow-soft transition-all active:scale-95">
+                    <button onClick={() => setCalWeekOffset(prev => prev + 1)} className="w-8 h-8 bg-white hover:bg-slate-50 flex items-center justify-center rounded-lg border border-slate-100 shadow-soft transition-all active:scale-95">
                       <ChevronRight className="w-4 h-4 text-slate-400" />
                     </button>
                   </div>
@@ -545,7 +547,6 @@ export default function Schedule() {
                                     : "bg-gray-50 border-transparent hover:bg-gray-100 text-gray-700",
                               )}
                             >
-                              {isTimeFenced ? <Lock className="w-4 h-4 flex-shrink-0 sm:mr-1.5 text-red-400" /> : <Search className="w-4 h-4 flex-shrink-0 sm:mr-1.5" />}
                               <span className="">Đổi ca</span>
                             </button>
                           );
