@@ -26,6 +26,7 @@ import { useApp } from "@/context/AppContext";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 
 type AttState =
+  | "checking_location"
   | "pending_in"
   | "checklist_open"
   | "working"
@@ -307,25 +308,32 @@ export default function Attendance() {
                   {shift.requireHandshake && (
                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                   )}
-                  <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-[16px] mb-1.5 tracking-tight">
-                        {shift.shiftName}
-                      </h3>
-                      <div className="flex items-center gap-2.5 text-[11px] font-bold text-slate-400 uppercase tracking-wide">
-                        <span className="flex items-center gap-1.5 py-1 px-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-600">
-                          <Clock className="w-3.5 h-3.5" /> {shift.timeStr}
-                        </span>
-                        <span className="flex items-center gap-1.5 py-1 px-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-900">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" /> {shift.storeName}
-                        </span>
+                  <div className="flex justify-between items-start mb-4 relative z-10 w-full">
+                    <div className="flex-1">
+                      <p className="font-display text-2xl font-black text-slate-900 tracking-tight">
+                        {shift.timeStr}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{shift.hours}h</span>
+                        <span className="text-slate-200 text-[10px]">•</span>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{format(shift.date, "dd/MM")}</span>
                       </div>
                     </div>
-                    {shift.requireHandshake && (
-                      <span className="text-[9px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-lg uppercase tracking-[0.1em] font-extrabold border border-indigo-200">
-                        Điều phối mới
+                    <div className="text-right flex-1 flex flex-col items-end">
+                      <div className="flex flex-col items-end gap-1.5">
+                        {shift.requireHandshake && (
+                          <span className="text-[8px] font-black bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded uppercase tracking-widest border border-indigo-200">
+                            Điều phối mới
+                          </span>
+                        )}
+                        <h3 className="font-bold text-sm tracking-tight text-slate-900">
+                          {shift.shiftName}
+                        </h3>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400 mt-1 max-w-full truncate uppercase tracking-widest">
+                        {shift.storeName || "Home Store"}
                       </span>
-                    )}
+                    </div>
                   </div>
 
                   {shift.requireHandshake ? (
@@ -361,6 +369,15 @@ export default function Attendance() {
                               ? "morning"
                               : "night",
                           );
+                          setAttState("checking_location");
+                          setTimeout(() => {
+                            if (!inZone) {
+                              setShowGpsModal(true);
+                              setAttState("pending_in");
+                            } else {
+                              setAttState("pending_in");
+                            }
+                          }, 2500);
                         }}
                         className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-lg active:scale-[0.98] uppercase tracking-widest"
                       >
@@ -436,16 +453,18 @@ export default function Attendance() {
                   </div>
                 </div>
                   <div className="flex flex-col items-end gap-2">
-                    <div
-                      className={cn(
-                        "text-[9px] px-2.5 py-1 rounded-lg font-extrabold uppercase tracking-widest border",
-                        inZone
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : "bg-red-50 text-red-600 border-red-200 shadow-soft shadow-red-100",
-                      )}
-                    >
-                      {inZone ? "GPS Hợp lệ" : "Sai Vị trí"}
-                    </div>
+                    {attState !== "checking_location" && (
+                      <div
+                        className={cn(
+                          "text-[9px] px-2.5 py-1 rounded-lg font-extrabold uppercase tracking-widest border",
+                          inZone
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : "bg-red-50 text-red-600 border-red-200 shadow-soft shadow-red-100",
+                        )}
+                      >
+                        {inZone ? "GPS Hợp lệ" : "Sai Vị trí"}
+                      </div>
+                    )}
                     {activeShiftId?.startsWith("adhoc_") &&
                       attState === "pending_in" && (
                         <button
@@ -470,6 +489,36 @@ export default function Attendance() {
                 </h3>
 
                 <AnimatePresence mode="wait">
+                  {/* --- STATE: CHECKING LOCATION --- */}
+                  {attState === "checking_location" && (
+                    <motion.div
+                      key="checking"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex flex-col items-center justify-center space-y-4"
+                    >
+                      <div className="relative w-24 h-24 flex items-center justify-center">
+                        <motion.div
+                          className="absolute inset-0 border-4 border-indigo-200 rounded-full"
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        <motion.div
+                          className="absolute inset-0 border-4 border-indigo-400 rounded-full"
+                          animate={{ scale: [1, 1.2, 1], opacity: [0.8, 0, 0.8] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+                        />
+                        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center z-10 border-2 border-indigo-300">
+                          <MapPin className="w-6 h-6 text-indigo-600 animate-pulse" />
+                        </div>
+                      </div>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+                        Đang kiểm tra vị trí GPS...
+                      </p>
+                    </motion.div>
+                  )}
+
                   {/* --- STATE: PENDING IN --- */}
                   {(attState === "pending_in" ||
                     (attState === "done" && scenario === "forgot_in")) && (
